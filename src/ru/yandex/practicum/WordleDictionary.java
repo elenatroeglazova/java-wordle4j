@@ -2,8 +2,6 @@ package ru.yandex.practicum;
 
 import java.util.*;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 /*
 этот класс содержит в себе список слов List<String>
     его методы похожи на методы списка, но учитывают особенности игры
@@ -43,6 +41,44 @@ public class WordleDictionary {
         }
 
         return true;
+    }
+
+    public List<String> getWordsByLetters(Map<String, LinkedHashMap<String, LinkedHashSet<Integer>>> guessedLetters,
+                                          List<String> matches) {
+        if (matches.isEmpty()) {
+            matches = new ArrayList<>(words);
+        }
+
+        if (!guessedLetters.isEmpty()) {
+            for (Map.Entry<String, LinkedHashMap<String, LinkedHashSet<Integer>>> entry : guessedLetters.entrySet()) {
+                String result = entry.getKey();
+                LinkedHashMap<String, LinkedHashSet<Integer>> letters = entry.getValue();
+
+                for (Map.Entry<String, LinkedHashSet<Integer>> en : letters.entrySet()) {
+                    switch (result) {
+                        case "-" -> matches.removeIf(word -> word.contains(en.getKey()));
+                        case "+" -> {
+                            String letter = en.getKey();
+                            matches.removeIf(word -> !word.contains(letter));
+                            Set<Integer> indexesSet = en.getValue();
+                            for (int i : indexesSet) {
+                                matches.removeIf(word -> !word.substring(i, i + 1).equals(letter));
+                            }
+                        }
+                        case "^" -> {
+                            String letter = en.getKey();
+                            matches.removeIf(word -> !word.contains(letter));
+                            Set<Integer> indexesSet = en.getValue();
+                            for (int i : indexesSet) {
+                                matches.removeIf(word -> word.substring(i, i + 1).equals(letter));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return matches;
     }
 
     public boolean isInDictionary(String word) {

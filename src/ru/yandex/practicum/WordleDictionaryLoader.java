@@ -15,7 +15,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
     на выходе должен быть класс WordleDictionary
  */
 public class WordleDictionaryLoader {
-    PrintWriter logWriter;
+    private final PrintWriter logWriter;
 
     public WordleDictionaryLoader(PrintWriter writer) {
         logWriter = writer;

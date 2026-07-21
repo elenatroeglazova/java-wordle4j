@@ -27,10 +27,9 @@ public class Wordle {
             }
             Path logFile = Files.createFile(filePath);
             try(PrintWriter writer = new PrintWriter(logFile.toFile())) {
-
                 WordleDictionaryLoader loader = new WordleDictionaryLoader(writer);
                 WordleDictionary dictionary = loader.load();
-                WordleGame game = new WordleGame();
+                WordleGame game = new WordleGame(writer);
 
                 game.setDictionary(dictionary);
                 game.setSteps(MAX_ATTEMPTS);

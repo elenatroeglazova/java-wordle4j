@@ -1,8 +1,7 @@
 package ru.yandex.practicum;
 
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Scanner;
+import java.io.PrintWriter;
+import java.util.*;
 
 /*
 в этом классе хранится словарь и состояние игры
@@ -19,13 +18,23 @@ import java.util.Scanner;
 public class WordleGame {
     private final Scanner scanner = new Scanner(System.in);
 
+    private final PrintWriter logWriter;
+
     private String answer;
 
     private int steps;
 
     private WordleDictionary dictionary;
 
-    private final Map<String, Integer> pickedWords = new LinkedHashMap<>();
+    Map<String, LinkedHashMap<String, LinkedHashSet<Integer>>> guessedLetters = new LinkedHashMap<>();
+
+    Map<String, LinkedHashMap<String, LinkedHashSet<Integer>>> savedGuessedLetters = new LinkedHashMap<>();
+
+    List<String> matchingWords = new ArrayList<>();
+
+    public WordleGame(PrintWriter logWriter) {
+        this.logWriter = logWriter;
+    }
 
     public void setSteps(int steps) {
         this.steps = steps;
@@ -40,30 +49,34 @@ public class WordleGame {
 
         while (steps != 0) {
             System.out.println("Загадайте слово из 5 букв");
-            String word;
+            String word = scanner.nextLine();
+
+            if (word.isBlank()) {
+                prompt();
+                continue;
+            }
 
             while (true) {
-                word = scanner.nextLine();
                 word = WordleDictionary.align(word);
 
                 if (isValid(word)) {
                     break;
                 }
 
-                System.out.println("Попробуйте еще раз");
+                System.out.println("Попробуйте еще раз:");
+                word = scanner.nextLine();
             }
 
             decrementSteps();
 
             if (isSuccess(word)) {
+                System.out.println("Это верное слово.");
                 System.out.println("Вы выиграли!");
                 return;
             } else {
                 System.out.println(compare(word));
                 System.out.println("Вы не угадали!");
             }
-
-            savePickedWord(word);
         }
 
         System.out.println("Верное слово: " + answer);
@@ -79,10 +92,7 @@ public class WordleGame {
     }
 
     private boolean isValid(String word) {
-        if (word.isBlank()) {
-            System.out.println("Слово не введено!");
-            return false;
-        } else if (!WordleDictionary.isCyrillic(word)) {
+        if (!WordleDictionary.isCyrillic(word)) {
             System.out.println("Слово должно содержать только кирриллицу!");
             return false;
         } else if (word.length() != 5) {
@@ -115,16 +125,119 @@ public class WordleGame {
             }
         }
 
+        savePickedWord(word, result.toString());
         return result.toString();
     }
 
-    private void savePickedWord(String word) {
-        if (pickedWords.containsKey(word)) {
-            Integer count = pickedWords.get(word);
-            count++;
-            pickedWords.put(word, count);
+    private void savePickedWord(String word, String comparisonResult) {
+        guessedLetters = new LinkedHashMap<>();
+        LinkedHashSet<Integer> resultIndexes;
+        LinkedHashMap<String, LinkedHashSet<Integer>> letters;
+
+        for (int i = 1; i <= word.length(); i++) {
+            String pickedWordChar = word.substring(i - 1, i);
+            String resultChar = comparisonResult.substring(i - 1, i);
+
+            if (guessedLetters.containsKey(resultChar)) {
+                letters = guessedLetters.get(resultChar);
+                if (letters.containsKey(pickedWordChar)) {
+                    if (resultChar.equals("-")) {
+                        if (!letters.get(pickedWordChar).isEmpty()) {
+                            continue;
+                        }
+                    }
+                    letters.get(pickedWordChar).add(i - 1);
+                } else {
+                    resultIndexes = new LinkedHashSet<>();
+                    resultIndexes.add(i - 1);
+                    letters.put(pickedWordChar, resultIndexes);
+                }
+            } else {
+                letters = new LinkedHashMap<>();
+                resultIndexes = new LinkedHashSet<>();
+                resultIndexes.add(i - 1);
+                letters.put(pickedWordChar, resultIndexes);
+                guessedLetters.put(resultChar, letters);
+            }
+        }
+
+        findMatchedWords();
+    }
+
+    private void findMatchedWords() {
+        saveDifferenceWithOldGuesses();
+        matchingWords = dictionary.getWordsByLetters(guessedLetters, matchingWords);
+    }
+
+    private void saveDifferenceWithOldGuesses() {
+        if (savedGuessedLetters.isEmpty()) {
+            savedGuessedLetters.putAll(guessedLetters);
+            return;
+        }
+
+        Map<String, LinkedHashMap<String, LinkedHashSet<Integer>>> copyGuessedLetters = new HashMap<>(guessedLetters);
+
+        for (Map.Entry<String, LinkedHashMap<String, LinkedHashSet<Integer>>> entry : savedGuessedLetters.entrySet()) {
+            String resultSymbol = entry.getKey();
+            LinkedHashMap<String, LinkedHashSet<Integer>> newLetters = guessedLetters.get(resultSymbol);
+
+            if (newLetters == null || newLetters.isEmpty()) {
+                continue;
+            }
+
+            for (Map.Entry<String, LinkedHashSet<Integer>> oldLetterSet : entry.getValue().entrySet()) {
+                String letter = oldLetterSet.getKey();
+                LinkedHashSet<Integer> newIndexes = newLetters.get(letter);
+                LinkedHashSet<Integer> oldIndexes = oldLetterSet.getValue();
+
+                if (newIndexes == null || newIndexes.isEmpty() || oldIndexes == null || oldIndexes.isEmpty()) {
+                    continue;
+                }
+
+                if (!newLetters.containsKey(letter)) {
+                    continue;
+                }
+
+                if (resultSymbol.equals("-")) {
+                    newLetters.remove(letter);
+                } else {
+                    for (Integer index : oldIndexes) {
+                        newIndexes.remove(index);
+                        if (newIndexes.isEmpty()) {
+                            newLetters.remove(letter);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (Map.Entry<String, LinkedHashMap<String, LinkedHashSet<Integer>>> entry : copyGuessedLetters.entrySet()) {
+            savedGuessedLetters.merge(entry.getKey(), entry.getValue(), (val1, val2) -> {
+                for (Map.Entry<String, LinkedHashSet<Integer>> en : val1.entrySet()) {
+                    val2.merge(en.getKey(), en.getValue(), (v1, v2) -> {
+                        v1.addAll(v2);
+                        return v1;
+                    });
+                }
+                val1.putAll(val2);
+                return val1;
+            });
+        }
+    }
+
+    private void prompt() {
+        if (matchingWords.isEmpty()) {
+            findMatchedWords();
+        }
+
+        if (matchingWords.size() == 1) {
+            System.out.println(answer);
         } else {
-            pickedWords.put(word, 1);
+            List<String> matchingWordsCopy = new ArrayList<>(matchingWords);
+            matchingWordsCopy.remove(answer);
+            Random random = new Random();
+            int index = random.nextInt(matchingWordsCopy.size());
+            System.out.println(matchingWordsCopy.get(index));
         }
     }
 }
