@@ -5,6 +5,7 @@ import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Locale;
 
 /*
 в главном классе нам нужно:
@@ -27,13 +28,21 @@ public class Wordle {
             }
             Path logFile = Files.createFile(filePath);
             try(PrintWriter writer = new PrintWriter(logFile.toFile())) {
-                WordleDictionaryLoader loader = new WordleDictionaryLoader(writer);
-                WordleDictionary dictionary = loader.load();
-                WordleGame game = new WordleGame(writer);
+                try {
+                    writer.println("\nНачинаем игру!\n".toUpperCase(Locale.ROOT));
+                    writer.println("*".repeat(80));
+                    writer.println("*".repeat(80));
+                    WordleDictionaryLoader loader = new WordleDictionaryLoader(writer);
+                    WordleDictionary dictionary = loader.load();
+                    WordleGame game = new WordleGame(writer);
 
-                game.setDictionary(dictionary);
-                game.setSteps(MAX_ATTEMPTS);
-                game.play();
+                    game.setDictionary(dictionary);
+                    game.setSteps(MAX_ATTEMPTS);
+                    game.play();
+                } catch (IOException ioException) {
+                    writer.println(ioException.getMessage());
+                    ioException.printStackTrace(writer);
+                }
             }
         } catch (IOException ioException) {
             System.out.println("Не удалось создать log-файл\n" + ioException.getMessage());

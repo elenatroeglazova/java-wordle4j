@@ -21,8 +21,9 @@ public class WordleDictionaryLoader {
         logWriter = writer;
     }
 
-    public WordleDictionary load() {
-        WordleDictionary dictionary = new WordleDictionary();
+    public WordleDictionary load() throws IOException {
+        logWriter.println("\nПодгружаем словарь...");
+        WordleDictionary dictionary = new WordleDictionary(logWriter);
         try(BufferedReader reader = new BufferedReader(new FileReader("words_ru.txt", UTF_8))) {
             List<String> loadedWords = new ArrayList<>();
 
@@ -32,10 +33,8 @@ public class WordleDictionaryLoader {
 
             dictionary.addAll(loadedWords);
             dictionary.prepare();
-        } catch (IOException ioException) {
-            logWriter.println("Не удалось прочесть файл со словарем\n" + ioException.getMessage());
         }
-
+        logWriter.println("Словарь успешно загружен");
         return dictionary;
     }
 }

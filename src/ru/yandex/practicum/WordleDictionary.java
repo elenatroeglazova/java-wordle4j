@@ -1,5 +1,6 @@
 package ru.yandex.practicum;
 
+import java.io.PrintWriter;
 import java.util.*;
 
 /*
@@ -8,15 +9,23 @@ import java.util.*;
     также этот класс может содержать рутинные функции по сравнению слов, букв и т.д.
  */
 public class WordleDictionary {
+    private final PrintWriter logWriter;
 
     private final List<String> words = new ArrayList<>();
 
+    public WordleDictionary(PrintWriter logWriter) {
+        this.logWriter = logWriter;
+    }
+
     public void prepare() {
         words.removeIf(word -> word.length() != 5);
+        logWriter.println("Словарь отформатирован и содержит только пятибуквенные слова");
+        logWriter.println("Размер словаря на данный момент: " + words.size());
     }
 
     public void addAll(Collection<String> collection) {
         words.addAll(collection);
+        logWriter.println("В словарь добавлены новые слова");
     }
 
     public String get() {

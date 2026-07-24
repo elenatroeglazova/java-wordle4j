@@ -1,5 +1,9 @@
 package ru.yandex.practicum;
 
+import ru.yandex.practicum.exceptions.WordHasNonCyrillicCharacters;
+import ru.yandex.practicum.exceptions.WordIsNotOfSpecifiedLength;
+import ru.yandex.practicum.exceptions.WordNotFoundInDictionary;
+
 import java.io.PrintWriter;
 import java.util.*;
 
@@ -38,6 +42,7 @@ public class WordleGame {
 
     public void setSteps(int steps) {
         this.steps = steps;
+        logWriter.println("\nУстановлено общее количество шагов: " + this.steps);
     }
 
     public void setDictionary(WordleDictionary dictionary) {
@@ -51,11 +56,6 @@ public class WordleGame {
             System.out.println("Загадайте слово из 5 букв");
             String word = scanner.nextLine();
 
-            if (word.isBlank()) {
-                prompt();
-                continue;
-            }
-
             while (true) {
                 word = WordleDictionary.align(word);
 
@@ -67,11 +67,21 @@ public class WordleGame {
                 word = scanner.nextLine();
             }
 
+            if (word.isBlank()) {
+                prompt();
+                continue;
+            }
+
             decrementSteps();
 
             if (isSuccess(word)) {
                 System.out.println("Это верное слово.");
                 System.out.println("Вы выиграли!");
+                logWriter.println("\nИгроком введено загаданное слово - " + word.toUpperCase(Locale.ROOT));
+                logWriter.println("");
+                logWriter.println("*".repeat(80));
+                logWriter.println("*".repeat(80));
+                logWriter.println("Конец игры!".toUpperCase(Locale.ROOT));
                 return;
             } else {
                 System.out.println(compare(word));
@@ -85,20 +95,38 @@ public class WordleGame {
 
     private void decrementSteps() {
         steps--;
+        logWriter.println("\nЧисло шагов в игре уменьшилось");
+        logWriter.println("Оставшиеся шаги: " + steps);
     }
 
     private void pickSecretWord() {
         answer = dictionary.get();
+        logWriter.println("\nБыло загадано слово: " + answer.toUpperCase(Locale.ROOT));
     }
 
     private boolean isValid(String word) {
+        if (word.isEmpty()) {
+            return true;
+        }
+
         if (!WordleDictionary.isCyrillic(word)) {
+            WordHasNonCyrillicCharacters exception =
+                    new WordHasNonCyrillicCharacters("Слово содержит некиррилические буквы");
+            logWriter.println("");
+            exception.printStackTrace(logWriter);
             System.out.println("Слово должно содержать только кирриллицу!");
             return false;
         } else if (word.length() != 5) {
+            WordIsNotOfSpecifiedLength exception =
+                    new WordIsNotOfSpecifiedLength("Слово не соответствует заданной длине");
+            logWriter.println("");
+            exception.printStackTrace(logWriter);
             System.out.println("Слово должно быть из 5 букв!");
             return false;
         } else if (!dictionary.isInDictionary(word)) {
+            WordNotFoundInDictionary exception = new WordNotFoundInDictionary("Слово не найдено в словаре");
+            logWriter.println("");
+            exception.printStackTrace(logWriter);
             System.out.println("Такого слова нет в словаре");
             return false;
         }
@@ -126,6 +154,9 @@ public class WordleGame {
         }
 
         savePickedWord(word, result.toString());
+        logWriter.println("\nВариант игрока: " + word.toUpperCase(Locale.ROOT));
+        logWriter.println("Результат сравнения с загаданным словом: " + result);
+
         return result.toString();
     }
 
@@ -167,6 +198,8 @@ public class WordleGame {
     private void findMatchedWords() {
         saveDifferenceWithOldGuesses();
         matchingWords = dictionary.getWordsByLetters(guessedLetters, matchingWords);
+        logWriter.println("\nПроизошел отбор слов с учетом сделанных попыток отгадывания");
+        logWriter.println("Количество слов, подходящих под условия отбора: " + matchingWords.size());
     }
 
     private void saveDifferenceWithOldGuesses() {
@@ -230,14 +263,18 @@ public class WordleGame {
             findMatchedWords();
         }
 
+        logWriter.println("\nБыла запрошена подсказка игроком");
         if (matchingWords.size() == 1) {
             System.out.println(answer);
+            logWriter.println("Из подсказок осталось только загаданное слово");
         } else {
             List<String> matchingWordsCopy = new ArrayList<>(matchingWords);
             matchingWordsCopy.remove(answer);
             Random random = new Random();
             int index = random.nextInt(matchingWordsCopy.size());
-            System.out.println(matchingWordsCopy.get(index));
+            String prompt = matchingWordsCopy.get(index);
+            logWriter.println("Пользователю выдана подсказка: " + prompt.toUpperCase(Locale.ROOT));
+            System.out.println(prompt);
         }
     }
 }
