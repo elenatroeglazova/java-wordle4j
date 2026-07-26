@@ -53,6 +53,10 @@ public class WordleGame {
         return this.dictionary;
     }
 
+    public List<String> getMatchingWords() {
+        return matchingWords;
+    }
+
     public void play() {
         pickSecretWord();
 
@@ -72,7 +76,7 @@ public class WordleGame {
             }
 
             if (word.isBlank()) {
-                prompt();
+                System.out.println(prompt());
                 continue;
             }
 
@@ -164,7 +168,7 @@ public class WordleGame {
         return result.toString();
     }
 
-    private void savePickedWord(String word, String comparisonResult) {
+    public void savePickedWord(String word, String comparisonResult) {
         guessedLetters = new LinkedHashMap<>();
         LinkedHashSet<Integer> resultIndexes;
         LinkedHashMap<String, LinkedHashSet<Integer>> letters;
@@ -262,23 +266,24 @@ public class WordleGame {
         }
     }
 
-    private void prompt() {
+    public String prompt() {
         if (matchingWords.isEmpty()) {
             findMatchedWords();
         }
 
         logWriter.println("\nБыла запрошена подсказка игроком");
         if (matchingWords.size() == 1) {
-            System.out.println(answer);
             logWriter.println("Из подсказок осталось только загаданное слово");
+            return answer;
         } else {
             List<String> matchingWordsCopy = new ArrayList<>(matchingWords);
             matchingWordsCopy.remove(answer);
             Random random = new Random();
             int index = random.nextInt(matchingWordsCopy.size());
             String prompt = matchingWordsCopy.get(index);
+            matchingWords.remove(prompt);
             logWriter.println("Пользователю выдана подсказка: " + prompt.toUpperCase(Locale.ROOT));
-            System.out.println(prompt);
+            return prompt;
         }
     }
 }

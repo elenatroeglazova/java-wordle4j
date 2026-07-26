@@ -3,14 +3,12 @@ package ru.yandex.practicum;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import ru.yandex.practicum.exceptions.WordIsNotOfSpecifiedLength;
 
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class WordleTest {
     private static PrintWriter consoleWriter;
@@ -24,7 +22,7 @@ class WordleTest {
     @BeforeEach
     public void setUp() {
         game = new WordleGame(consoleWriter);
-        List<String> words = new ArrayList<>(List.of("мост", "молоко", "цифра", "фокус"));
+        List<String> words = new ArrayList<>(List.of("мост", "молоко", "цифра", "фокус", "скоба"));
 
         game.setDictionary(new WordleDictionary(consoleWriter));
         game.getDictionary().addAll(words);
@@ -32,7 +30,7 @@ class WordleTest {
     }
 
     @Test
-    public void guessedWordShouldBeValid() {
+    public void pickedWordShouldBeValid() {
         String notSpecifiedLengthWord1 = "каша";
         String notSpecifiedLengthWord2 = "солома";
         String nonCyrillicCharacters1 = "frame";
@@ -52,8 +50,24 @@ class WordleTest {
 
     @Test
     public void dictionaryShouldContainOnly5CharactersWord() {
-        List<String> rightWords = new ArrayList<>(List.of("цифра", "фокус"));
+        List<String> rightWords = new ArrayList<>(List.of("цифра", "фокус", "скоба"));
 
         assertEquals(rightWords, game.getDictionary().getWords());
+    }
+
+    @Test
+    public void guessedWordsShouldBeExcludedFromTheHints() {
+        List<String> rightMatchingWord = new ArrayList<>(List.of("фокус", "скоба"));
+        game.savePickedWord("остов", "^^-^-");
+
+        assertEquals(rightMatchingWord, game.getMatchingWords(),
+                "В списке слов для подсказок должны остаться только слова, " +
+                        "подходящие под результаты предыдущих сравнений");
+
+        String promptWord = game.prompt();
+        rightMatchingWord.remove(promptWord);
+
+        assertEquals(rightMatchingWord, game.getMatchingWords(),
+                "Из списка слов для подсказок должно быть удалено слово, уже выданное в подсказках");
     }
 }
