@@ -27,7 +27,7 @@ public class Wordle {
                 Files.delete(filePath);
             }
             Path logFile = Files.createFile(filePath);
-            try(PrintWriter writer = new PrintWriter(logFile.toFile())) {
+            try (PrintWriter writer = new PrintWriter(logFile.toFile())) {
                 try {
                     writer.println("\nНачинаем игру!\n".toUpperCase(Locale.ROOT));
                     writer.println("*".repeat(80));
