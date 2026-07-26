@@ -24,7 +24,7 @@ public class WordleDictionaryLoader {
     public WordleDictionary load() throws IOException {
         logWriter.println("\nПодгружаем словарь...");
         WordleDictionary dictionary = new WordleDictionary(logWriter);
-        try(BufferedReader reader = new BufferedReader(new FileReader("words_ru.txt", UTF_8))) {
+        try (BufferedReader reader = new BufferedReader(new FileReader("words_ru.txt", UTF_8))) {
             List<String> loadedWords = new ArrayList<>();
 
             while (reader.ready()) {
