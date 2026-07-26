@@ -28,6 +28,10 @@ public class WordleDictionary {
         logWriter.println("В словарь добавлены новые слова");
     }
 
+    public List<String> getWords() {
+        return this.words;
+    }
+
     public String get() {
         Random random = new Random();
         int index = random.nextInt(words.size());

@@ -49,6 +49,10 @@ public class WordleGame {
         this.dictionary = dictionary;
     }
 
+    public WordleDictionary getDictionary() {
+        return this.dictionary;
+    }
+
     public void play() {
         pickSecretWord();
 

@@ -6,6 +6,8 @@ import org.junit.jupiter.api.Test;
 import ru.yandex.practicum.exceptions.WordIsNotOfSpecifiedLength;
 
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,6 +24,11 @@ class WordleTest {
     @BeforeEach
     public void setUp() {
         game = new WordleGame(consoleWriter);
+        List<String> words = new ArrayList<>(List.of("мост", "молоко", "цифра", "фокус"));
+
+        game.setDictionary(new WordleDictionary(consoleWriter));
+        game.getDictionary().addAll(words);
+        game.getDictionary().prepare();
     }
 
     @Test
@@ -30,7 +37,8 @@ class WordleTest {
         String notSpecifiedLengthWord2 = "солома";
         String nonCyrillicCharacters1 = "frame";
         String nonCyrillicCharacters2 = "78952";
-        String rightWord = "колос";
+        String isNotInDictionary = "колос";
+        String rightWord = "цифра";
 
         assertFalse(game.isValid(notSpecifiedLengthWord1), "Отгадываемое слово должно быть длиной в 5 символов");
         assertFalse(game.isValid(notSpecifiedLengthWord2), "Отгадываемое слово должно быть длиной в 5 символов");
@@ -38,6 +46,14 @@ class WordleTest {
                 "Отгадываемое слово должно содержать только буквы кирриллицы");
         assertFalse(game.isValid(nonCyrillicCharacters2),
                 "Отгадываемое слово должно содержать только буквы кирриллицы");
+        assertFalse(game.isValid(isNotInDictionary), "Отгадываемое слово должно быть в словаре");
         assertTrue(game.isValid(rightWord), "Слово выбоано по всем правилам");
+    }
+
+    @Test
+    public void dictionaryShouldContainOnly5CharactersWord() {
+        List<String> rightWords = new ArrayList<>(List.of("цифра", "фокус"));
+
+        assertEquals(rightWords, game.getDictionary().getWords());
     }
 }
