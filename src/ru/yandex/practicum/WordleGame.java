@@ -104,7 +104,7 @@ public class WordleGame {
         logWriter.println("\nБыло загадано слово: " + answer.toUpperCase(Locale.ROOT));
     }
 
-    private boolean isValid(String word) {
+    public boolean isValid(String word) {
         if (word.isEmpty()) {
             return true;
         }
