@@ -13,12 +13,14 @@ public class WordleDictionary {
 
     private final List<String> words = new ArrayList<>();
 
+    private static final int GAME_WORD_LENGTH = 5;
+
     public WordleDictionary(PrintWriter logWriter) {
         this.logWriter = logWriter;
     }
 
     public void prepare() {
-        words.removeIf(word -> word.length() != 5);
+        words.removeIf(word -> word.length() != GAME_WORD_LENGTH);
         logWriter.println("Словарь отформатирован и содержит только пятибуквенные слова");
         logWriter.println("Размер словаря на данный момент: " + words.size());
     }
@@ -56,42 +58,47 @@ public class WordleDictionary {
         return true;
     }
 
-    public List<String> getWordsByLetters(Map<String, LinkedHashMap<String, LinkedHashSet<Integer>>> guessedLetters,
-                                          List<String> matches) {
-        if (matches.isEmpty()) {
-            matches = new ArrayList<>(words);
+    public static void removeWordsWithMissingChars(Set<Character> missingCharacters, List<String> matches) {
+        if (missingCharacters == null || missingCharacters.isEmpty()) {
+            return;
         }
 
-        if (!guessedLetters.isEmpty()) {
-            for (Map.Entry<String, LinkedHashMap<String, LinkedHashSet<Integer>>> entry : guessedLetters.entrySet()) {
-                String result = entry.getKey();
-                LinkedHashMap<String, LinkedHashSet<Integer>> letters = entry.getValue();
+        for (Character character : missingCharacters) {
+            matches.removeIf(word -> word.contains(character.toString()));
+        }
+    }
 
-                for (Map.Entry<String, LinkedHashSet<Integer>> en : letters.entrySet()) {
-                    switch (result) {
-                        case "-" -> matches.removeIf(word -> word.contains(en.getKey()));
-                        case "+" -> {
-                            String letter = en.getKey();
-                            matches.removeIf(word -> !word.contains(letter));
-                            Set<Integer> indexesSet = en.getValue();
-                            for (int i : indexesSet) {
-                                matches.removeIf(word -> !word.substring(i, i + 1).equals(letter));
-                            }
-                        }
-                        case "^" -> {
-                            String letter = en.getKey();
-                            matches.removeIf(word -> !word.contains(letter));
-                            Set<Integer> indexesSet = en.getValue();
-                            for (int i : indexesSet) {
-                                matches.removeIf(word -> word.substring(i, i + 1).equals(letter));
-                            }
-                        }
-                    }
-                }
+    public static void removeWordsWithoutMatchingChars(List<Character> exactMatches, List<String> matches) {
+        if (exactMatches == null || exactMatches.isEmpty()) {
+            return;
+        }
+
+        for (int i = 0; i < exactMatches.size(); i++) {
+            Character character = exactMatches.get(i);
+            if (character == null) {
+                continue;
             }
+
+            final int index = i;
+            matches.removeIf(word -> !word.substring(index, index + 1).equals(character.toString()));
+        }
+    }
+
+    public static void removeWordsWithoutPresentChars(List<Character> presentCharacters, List<String> matches) {
+        if (presentCharacters == null || presentCharacters.isEmpty()) {
+            return;
         }
 
-        return matches;
+        for (int i = 0; i < presentCharacters.size(); i++) {
+            Character character = presentCharacters.get(i);
+            if (character == null) {
+                continue;
+            }
+
+            final int index = i;
+            matches.removeIf(word -> !word.contains(character.toString()));
+            matches.removeIf(word -> word.substring(index, index + 1).equals(character.toString()));
+        }
     }
 
     public boolean isInDictionary(String word) {

@@ -2,10 +2,13 @@ package ru.yandex.practicum;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Locale;
+
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /*
 в главном классе нам нужно:
@@ -27,7 +30,7 @@ public class Wordle {
                 Files.delete(filePath);
             }
             Path logFile = Files.createFile(filePath);
-            try (PrintWriter writer = new PrintWriter(logFile.toFile())) {
+            try (PrintWriter writer = new PrintWriter(logFile.toFile(), UTF_8)) {
                 try {
                     writer.println("\nНачинаем игру!\n".toUpperCase(Locale.ROOT));
                     writer.println("*".repeat(80));

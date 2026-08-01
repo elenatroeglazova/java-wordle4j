@@ -30,9 +30,13 @@ public class WordleGame {
 
     private WordleDictionary dictionary;
 
-    Map<String, LinkedHashMap<String, LinkedHashSet<Integer>>> guessedLetters = new LinkedHashMap<>();
+    private static final int GAME_WORD_LENGTH = 5;
 
-    Map<String, LinkedHashMap<String, LinkedHashSet<Integer>>> savedGuessedLetters = new LinkedHashMap<>();
+    Set<Character> missingCharacters;
+
+    List<Character> presentCharacters;
+
+    List<Character> exactMatches;
 
     List<String> matchingWords = new ArrayList<>();
 
@@ -124,7 +128,7 @@ public class WordleGame {
             exception.printStackTrace(logWriter);
             System.out.println("Слово должно содержать только кирриллицу!");
             return false;
-        } else if (word.length() != 5) {
+        } else if (word.length() != GAME_WORD_LENGTH) {
             WordIsNotOfSpecifiedLength exception =
                     new WordIsNotOfSpecifiedLength("Слово не соответствует заданной длине");
             logWriter.println("");
@@ -169,106 +173,40 @@ public class WordleGame {
     }
 
     public void savePickedWord(String word, String comparisonResult) {
-        guessedLetters = new LinkedHashMap<>();
-        LinkedHashSet<Integer> resultIndexes;
-        LinkedHashMap<String, LinkedHashSet<Integer>> letters;
+        missingCharacters = new HashSet<>();
+        presentCharacters = new ArrayList<>(Collections.nCopies(GAME_WORD_LENGTH, null));
+        exactMatches = new ArrayList<>(Collections.nCopies(GAME_WORD_LENGTH, null));
 
-        for (int i = 1; i <= word.length(); i++) {
-            String pickedWordChar = word.substring(i - 1, i);
-            String resultChar = comparisonResult.substring(i - 1, i);
+        for (int i = 0; i < word.length(); i++) {
+            Character pickedWordChar = word.charAt(i);
+            char resultChar = comparisonResult.charAt(i);
 
-            if (guessedLetters.containsKey(resultChar)) {
-                letters = guessedLetters.get(resultChar);
-                if (letters.containsKey(pickedWordChar)) {
-                    if (resultChar.equals("-")) {
-                        if (!letters.get(pickedWordChar).isEmpty()) {
-                            continue;
-                        }
-                    }
-                    letters.get(pickedWordChar).add(i - 1);
-                } else {
-                    resultIndexes = new LinkedHashSet<>();
-                    resultIndexes.add(i - 1);
-                    letters.put(pickedWordChar, resultIndexes);
-                }
-            } else {
-                letters = new LinkedHashMap<>();
-                resultIndexes = new LinkedHashSet<>();
-                resultIndexes.add(i - 1);
-                letters.put(pickedWordChar, resultIndexes);
-                guessedLetters.put(resultChar, letters);
+            switch (resultChar) {
+                case '+' -> exactMatches.set(i, pickedWordChar);
+                case '-' -> missingCharacters.add(pickedWordChar);
+                case '^' -> presentCharacters.set(i, pickedWordChar);
             }
         }
 
-        findMatchedWords();
+        getMatchedWords();
     }
 
-    private void findMatchedWords() {
-        saveDifferenceWithOldGuesses();
-        matchingWords = dictionary.getWordsByLetters(guessedLetters, matchingWords);
+    private void getMatchedWords() {
+        if (matchingWords.isEmpty()) {
+            matchingWords = new ArrayList<>(dictionary.getWords());
+        }
+
+        WordleDictionary.removeWordsWithMissingChars(missingCharacters, matchingWords);
+        WordleDictionary.removeWordsWithoutMatchingChars(exactMatches, matchingWords);
+        WordleDictionary.removeWordsWithoutPresentChars(presentCharacters, matchingWords);
+
         logWriter.println("\nПроизошел отбор слов с учетом сделанных попыток отгадывания");
         logWriter.println("Количество слов, подходящих под условия отбора: " + matchingWords.size());
     }
 
-    private void saveDifferenceWithOldGuesses() {
-        if (savedGuessedLetters.isEmpty()) {
-            savedGuessedLetters.putAll(guessedLetters);
-            return;
-        }
-
-        Map<String, LinkedHashMap<String, LinkedHashSet<Integer>>> copyGuessedLetters = new HashMap<>(guessedLetters);
-
-        for (Map.Entry<String, LinkedHashMap<String, LinkedHashSet<Integer>>> entry : savedGuessedLetters.entrySet()) {
-            String resultSymbol = entry.getKey();
-            LinkedHashMap<String, LinkedHashSet<Integer>> newLetters = guessedLetters.get(resultSymbol);
-
-            if (newLetters == null || newLetters.isEmpty()) {
-                continue;
-            }
-
-            for (Map.Entry<String, LinkedHashSet<Integer>> oldLetterSet : entry.getValue().entrySet()) {
-                String letter = oldLetterSet.getKey();
-                LinkedHashSet<Integer> newIndexes = newLetters.get(letter);
-                LinkedHashSet<Integer> oldIndexes = oldLetterSet.getValue();
-
-                if (newIndexes == null || newIndexes.isEmpty() || oldIndexes == null || oldIndexes.isEmpty()) {
-                    continue;
-                }
-
-                if (!newLetters.containsKey(letter)) {
-                    continue;
-                }
-
-                if (resultSymbol.equals("-")) {
-                    newLetters.remove(letter);
-                } else {
-                    for (Integer index : oldIndexes) {
-                        newIndexes.remove(index);
-                        if (newIndexes.isEmpty()) {
-                            newLetters.remove(letter);
-                        }
-                    }
-                }
-            }
-        }
-
-        for (Map.Entry<String, LinkedHashMap<String, LinkedHashSet<Integer>>> entry : copyGuessedLetters.entrySet()) {
-            savedGuessedLetters.merge(entry.getKey(), entry.getValue(), (val1, val2) -> {
-                for (Map.Entry<String, LinkedHashSet<Integer>> en : val1.entrySet()) {
-                    val2.merge(en.getKey(), en.getValue(), (v1, v2) -> {
-                        v1.addAll(v2);
-                        return v1;
-                    });
-                }
-                val1.putAll(val2);
-                return val1;
-            });
-        }
-    }
-
     public String prompt() {
         if (matchingWords.isEmpty()) {
-            findMatchedWords();
+            getMatchedWords();
         }
 
         logWriter.println("\nБыла запрошена подсказка игроком");
