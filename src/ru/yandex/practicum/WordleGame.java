@@ -119,17 +119,17 @@ public class WordleGame {
 
         if (!WordleDictionary.isCyrillic(word)) {
             logWriter.println("");
-            logWriter.println("Некорректный ввод игрока. Слово содержит некиррилические буквы");
+            logWriter.println("Некорректный ввод игрока. Слово содержит некиррилические буквы: " + word);
             System.out.println("Слово должно содержать только кирриллицу!");
             return false;
         } else if (word.length() != GAME_WORD_LENGTH) {
             logWriter.println("");
-            logWriter.println("Некорректный ввод игрока. Слово не соответствует заданной длине");
+            logWriter.println("Некорректный ввод игрока. Слово не соответствует заданной длине: " + word);
             System.out.println("Слово должно быть из 5 букв!");
             return false;
         } else if (!dictionary.isInDictionary(word)) {
             logWriter.println("");
-            logWriter.println("Некорректный ввод игрока. Слово не найдено в словаре");
+            logWriter.println("Некорректный ввод игрока. Слово не найдено в словаре: " + word);
             System.out.println("Такого слова нет в словаре");
             return false;
         }
