@@ -1,9 +1,5 @@
 package ru.yandex.practicum;
 
-import ru.yandex.practicum.exceptions.WordHasNonCyrillicCharacters;
-import ru.yandex.practicum.exceptions.WordIsNotOfSpecifiedLength;
-import ru.yandex.practicum.exceptions.WordNotFoundInDictionary;
-
 import java.io.PrintWriter;
 import java.util.*;
 
@@ -122,23 +118,18 @@ public class WordleGame {
         }
 
         if (!WordleDictionary.isCyrillic(word)) {
-            WordHasNonCyrillicCharacters exception =
-                    new WordHasNonCyrillicCharacters("Слово содержит некиррилические буквы");
             logWriter.println("");
-            exception.printStackTrace(logWriter);
+            logWriter.println("Некорректный ввод игрока. Слово содержит некиррилические буквы");
             System.out.println("Слово должно содержать только кирриллицу!");
             return false;
         } else if (word.length() != GAME_WORD_LENGTH) {
-            WordIsNotOfSpecifiedLength exception =
-                    new WordIsNotOfSpecifiedLength("Слово не соответствует заданной длине");
             logWriter.println("");
-            exception.printStackTrace(logWriter);
+            logWriter.println("Некорректный ввод игрока. Слово не соответствует заданной длине");
             System.out.println("Слово должно быть из 5 букв!");
             return false;
         } else if (!dictionary.isInDictionary(word)) {
-            WordNotFoundInDictionary exception = new WordNotFoundInDictionary("Слово не найдено в словаре");
             logWriter.println("");
-            exception.printStackTrace(logWriter);
+            logWriter.println("Некорректный ввод игрока. Слово не найдено в словаре");
             System.out.println("Такого слова нет в словаре");
             return false;
         }
